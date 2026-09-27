@@ -38,6 +38,71 @@
 
 ---
 
+## 🔀 本 fork 的改动
+
+> 本仓库 fork 自 [ZeroDeng01/sublinkPro](https://github.com/ZeroDeng01/sublinkPro)。
+> 改动集中在 [`feat/legacy-vless-format`](https://github.com/momo1994123/sublinkPro/tree/feat/legacy-vless-format) 分支（**尚未合并到 main**），相对上游 `main` 共 3 个提交、9 个文件、+955 / -3。
+
+### 1️⃣ 支持 v2rayN 老格式 VLESS 链接解析
+
+`node/protocol/vless.go`（+158）· `node/protocol/vless_test.go`（+86）
+
+v2rayN 老格式把 userinfo 段整体 base64 包裹：
+
+    vless://<base64("none:uuid@host:port")>?obfs=websocket&obfsParam=cdn.example.com&path=/ws&tls=1&peer=cdn.example.com#名称
+
+该段不含 `@`，标准解析路径会把整串当作 host，取到空 UUID 后报「uuid格式错误」，节点导入直接失败。
+
+新增 `normalizeLegacyVLESS`，在解析入口做一次等价重写：
+
+| 老格式字段 | 映射到 |
+|:---|:---|
+| base64 内的 encryption 前缀 | `encryption` |
+| `tls=1` | `security=tls`（否则 `none`） |
+| `obfs` | `type` |
+| `obfsParam` | `host` |
+| `peer` | `sni` |
+| `remarks` / `#fragment` | 节点名称 |
+
+已显式携带的标准参数优先级更高；不满足老格式特征的输入原样返回，标准链接**零影响**。`node/protocol` 包 169 个用例全部通过。
+
+### 2️⃣ 新增节点格式转换页面
+
+`webs/src/views/converter/index.jsx`（新增 +632）· `webs/src/routes/MainRoutes.jsx`（+5）· `webs/src/menu-items/subscription.js`（+11 -1）· `webs/src/views/nodes/index.jsx`（+14）· `webs/src/i18n/locales/zh-CN.json`（+24 -1）· `webs/src/i18n/locales/en-US.json`（+24 -1）
+
+「订阅管理」分组下的新页面，左输入右输出，批量多行实时转换；单行解析失败只标红该行，不中断其余行。
+
+- **解析**：v2rayN 老格式 vless（base64 包裹）、标准 vless / vmess / ss / trojan / hysteria2、socks / http 代理链接、Shadowrocket 行式导出
+- **输出**：标准 URI 与 Clash / Mihomo YAML 双 tab，各自带「复制全部」
+- **入口**：左侧菜单新增菜单项；节点管理页工具栏与窄屏操作区各加一个「老格式转换」按钮
+- 转换全部在浏览器本地完成，不新增 API 调用
+
+### 3️⃣ 忽略本机构建产物
+
+`.gitignore`（+1）：新增 `sublinkPro-linux`，与既有的 `sublinkPro.exe` / `sublink_amd64` / `sublink_arm64` 保持一致。
+
+---
+
+### 改动文件一览
+
+| 文件 | 增减 |
+|:---|---:|
+| `node/protocol/vless.go` | +158 |
+| `node/protocol/vless_test.go` | +86 |
+| `webs/src/views/converter/index.jsx` | +632（新增） |
+| `webs/src/views/nodes/index.jsx` | +14 |
+| `webs/src/menu-items/subscription.js` | +11 -1 |
+| `webs/src/routes/MainRoutes.jsx` | +5 |
+| `webs/src/i18n/locales/zh-CN.json` | +24 -1 |
+| `webs/src/i18n/locales/en-US.json` | +24 -1 |
+| `.gitignore` | +1 |
+
+### 许可
+
+上游为 MIT（`Copyright (c) 2025 ZeroDeng`），fork 与修改均在其许可范围内。
+
+---
+
 ## 📖 项目简介
 
 `SublinkPro` 是基于优秀的开源项目 [sublinkX](https://github.com/gooaclok819/sublinkX) / [sublinkE](https://github.com/eun1e/sublinkE) 进行二次开发，在原项目基础上做了彻底的重构与优化，并添加了更多功能。感谢原作者的付出与贡献。

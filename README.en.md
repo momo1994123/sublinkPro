@@ -38,6 +38,71 @@ English | [简体中文](README.md)
 
 ---
 
+## 🔀 Changes in This Fork
+
+> This repository is a fork of [ZeroDeng01/sublinkPro](https://github.com/ZeroDeng01/sublinkPro).
+> All changes live on the [`feat/legacy-vless-format`](https://github.com/momo1994123/sublinkPro/tree/feat/legacy-vless-format) branch (**not yet merged into `main`**) — 3 commits, 9 files, +955 / -3 relative to upstream `main`.
+
+### 1️⃣ Legacy v2rayN VLESS link parsing
+
+`node/protocol/vless.go` (+158) · `node/protocol/vless_test.go` (+86)
+
+The legacy v2rayN format base64-wraps the entire userinfo segment:
+
+    vless://<base64("none:uuid@host:port")>?obfs=websocket&obfsParam=cdn.example.com&path=/ws&tls=1&peer=cdn.example.com#name
+
+That segment contains no `@`, so the standard parse path treats the whole string as the host, ends up with an empty UUID, and fails with "uuid格式错误" — the node import simply fails.
+
+A new `normalizeLegacyVLESS` rewrites the input into its standard equivalent before parsing:
+
+| Legacy field | Maps to |
+|:---|:---|
+| encryption prefix inside the base64 blob | `encryption` |
+| `tls=1` | `security=tls` (otherwise `none`) |
+| `obfs` | `type` |
+| `obfsParam` | `host` |
+| `peer` | `sni` |
+| `remarks` / `#fragment` | node name |
+
+Explicitly supplied standard parameters take precedence, and any input that does not look like the legacy format is returned untouched — **zero impact** on standard links. All 169 tests in `node/protocol` pass.
+
+### 2️⃣ Node format converter page
+
+`webs/src/views/converter/index.jsx` (new, +632) · `webs/src/routes/MainRoutes.jsx` (+5) · `webs/src/menu-items/subscription.js` (+11 -1) · `webs/src/views/nodes/index.jsx` (+14) · `webs/src/i18n/locales/zh-CN.json` (+24 -1) · `webs/src/i18n/locales/en-US.json` (+24 -1)
+
+A new page under the Subscriptions group — input on the left, output on the right, batch conversion with live preview. A line that fails to parse is highlighted in red without interrupting the rest.
+
+- **Parses**: legacy v2rayN vless (base64-wrapped), standard vless / vmess / ss / trojan / hysteria2, socks / http proxy links, Shadowrocket line exports
+- **Outputs**: standard URI and Clash / Mihomo YAML in two tabs, each with a "copy all" button
+- **Entry points**: a new sidebar item, plus a legacy-converter button in both the node management toolbar and the narrow-screen action row
+- All conversion happens locally in the browser; no new API calls
+
+### 3️⃣ Ignore local build artifact
+
+`.gitignore` (+1): adds `sublinkPro-linux`, consistent with the existing `sublinkPro.exe` / `sublink_amd64` / `sublink_arm64` entries.
+
+---
+
+### Changed files
+
+| File | Diff |
+|:---|---:|
+| `node/protocol/vless.go` | +158 |
+| `node/protocol/vless_test.go` | +86 |
+| `webs/src/views/converter/index.jsx` | +632 (new) |
+| `webs/src/views/nodes/index.jsx` | +14 |
+| `webs/src/menu-items/subscription.js` | +11 -1 |
+| `webs/src/routes/MainRoutes.jsx` | +5 |
+| `webs/src/i18n/locales/zh-CN.json` | +24 -1 |
+| `webs/src/i18n/locales/en-US.json` | +24 -1 |
+| `.gitignore` | +1 |
+
+### License
+
+Upstream is MIT (`Copyright (c) 2025 ZeroDeng`); this fork and its modifications fall within that license.
+
+---
+
 ## 📖 Project Overview
 
 `SublinkPro` is a deeply refactored and enhanced project based on the excellent open source projects [sublinkX](https://github.com/gooaclok819/sublinkX) and [sublinkE](https://github.com/eun1e/sublinkE). Thanks to the original authors for their work and contributions.
