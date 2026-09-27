@@ -250,12 +250,170 @@ func EncodeVLESSURL(v VLESS) string {
 	return u.String()
 }
 
+// legacyObfsToNetwork 把老格式链接里的 obfs 值映射为标准 type 值。
+func legacyObfsToNetwork(obfs string) string {
+	switch strings.ToLower(strings.TrimSpace(obfs)) {
+	case "websocket", "ws":
+		return "ws"
+	case "httpupgrade":
+		return "httpupgrade"
+	case "grpc":
+		return "grpc"
+	case "h2", "http":
+		return "http"
+	case "", "tcp":
+		return "tcp"
+	default:
+		return strings.ToLower(strings.TrimSpace(obfs))
+	}
+}
+
+// firstNonEmptyStr 返回第一个非空字符串，用于给缺省字段挑选回退值。
+func firstNonEmptyStr(values ...string) string {
+	for _, v := range values {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+// normalizeLegacyVLESS 把 v2rayN 老格式 VLESS 链接重写为标准 VLESS URL。
+//
+// 老格式形如：
+//
+//	vless://<base64("none:uuid@host:port")>?obfs=websocket&obfsParam=cdn.example.com&path=/ws&tls=1&peer=cdn.example.com#名称
+//
+// 它的 userinfo 段被 base64 包裹且不含 "@"，标准解析路径会把整段当成 host，
+// 取到空 UUID 后报 "uuid格式错误"。这里在解析前完成等价转换：
+//
+//	base64 里的 encryption 前缀      -> encryption 参数
+//	tls=1                           -> security=tls，否则 security=none
+//	obfs=websocket|grpc|...         -> type=ws|grpc|...
+//	obfsParam                       -> host
+//	peer                            -> sni
+//	remarks 参数 / #fragment        -> 节点名称
+//
+// 已经携带的标准参数优先级更高，不会被老格式值覆盖。
+// 任何不满足老格式特征的输入一律原样返回，对标准链接零影响。
+func normalizeLegacyVLESS(s string) string {
+	rest, ok := strings.CutPrefix(s, "vless://")
+	if !ok {
+		return s
+	}
+
+	// 先剥离 fragment，否则 "#名称" 会被并进最后一个查询参数的值里
+	body := rest
+	fragment := ""
+	if i := strings.IndexByte(body, '#'); i >= 0 {
+		fragment = body[i+1:]
+		body = body[:i]
+	}
+
+	userinfo := body
+	rawQuery := ""
+	if i := strings.IndexByte(body, '?'); i >= 0 {
+		userinfo = body[:i]
+		rawQuery = body[i+1:]
+	}
+
+	// 含 "@" 说明是标准格式，userinfo 本身就是 uuid
+	if userinfo == "" || strings.Contains(userinfo, "@") {
+		return s
+	}
+
+	decoded := utils.Base64Decode(userinfo)
+	if decoded == userinfo || !strings.Contains(decoded, "@") {
+		return s
+	}
+
+	at := strings.LastIndexByte(decoded, '@')
+	cred, hostPort := decoded[:at], decoded[at+1:]
+
+	colon := strings.IndexByte(cred, ':')
+	if colon < 0 {
+		return s
+	}
+	encPrefix, legacyUUID := cred[:colon], cred[colon+1:]
+
+	hp := strings.LastIndexByte(hostPort, ':')
+	if hp <= 0 {
+		return s
+	}
+	host, port := hostPort[:hp], hostPort[hp+1:]
+	// 只有解出合法 UUID 才认定为老格式，避免误伤乱码输入
+	if host == "" || port == "" || !utils.IsUUID(legacyUUID) {
+		return s
+	}
+
+	q, err := url.ParseQuery(rawQuery)
+	if err != nil {
+		q = url.Values{}
+	}
+
+	// 先透传全部非老格式专有参数，再按老格式语义补齐缺失项，
+	// 因此显式的 security/type/host/sni 始终优先。
+	std := url.Values{}
+	for k, vs := range q {
+		switch k {
+		case "obfs", "obfsParam", "tls", "peer", "remarks", "remark":
+			continue
+		default:
+			std[k] = vs
+		}
+	}
+
+	if std.Get("encryption") == "" {
+		std.Set("encryption", firstNonEmptyStr(encPrefix, "none"))
+	}
+
+	if std.Get("security") == "" {
+		if v := q.Get("tls"); v == "1" || strings.EqualFold(v, "true") {
+			std.Set("security", "tls")
+		} else {
+			std.Set("security", "none")
+		}
+	}
+
+	if std.Get("type") == "" {
+		std.Set("type", legacyObfsToNetwork(q.Get("obfs")))
+	}
+
+	if std.Get("host") == "" {
+		if h := q.Get("obfsParam"); h != "" {
+			std.Set("host", h)
+		}
+	}
+
+	if std.Get("sni") == "" {
+		if p := q.Get("peer"); p != "" {
+			std.Set("sni", p)
+		}
+	}
+
+	// 名称优先级：remarks 参数 > #fragment
+	name := firstNonEmptyStr(q.Get("remarks"), q.Get("remark"), fragment)
+
+	// 交给 net/url 做转义，保证 fragment 里的非 ASCII 字符安全往返
+	return (&url.URL{
+		Scheme:   "vless",
+		User:     url.User(legacyUUID),
+		Host:     host + ":" + port,
+		RawQuery: std.Encode(),
+		Fragment: name,
+	}).String()
+}
+
 // DecodeVLESSURL 解析明文 VLESS URL，并兼容当前仓库支持的多类传输层扩展参数。
 // 端口默认值会随 security 语义变化，且 packetEncoding 与 packet_encoding 两种写法都会被接受。
+// 同时兼容 v2rayN 老格式链接（userinfo 为 base64 包裹的 "encryption:uuid@host:port"）。
 func DecodeVLESSURL(s string) (VLESS, error) {
 	if !strings.HasPrefix(s, "vless://") {
 		return VLESS{}, fmt.Errorf("非vless协议: %s", s)
 	}
+
+	// 老格式先归一化，再走标准解析路径
+	s = normalizeLegacyVLESS(s)
 
 	// 直接解析URL（v2ray格式是明文URL，不需要base64解码）
 	u, err := url.Parse(s)

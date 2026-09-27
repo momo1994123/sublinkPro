@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"sublink/utils"
 )
 
 // TestVlessEncodeDecode 测试 VLESS 编解码完整性
@@ -529,4 +531,88 @@ func TestLinkToProxy_VLESSXHTTPSkipCertFollowsSubscriptionConfig(t *testing.T) {
 		t.Fatal("download-settings 不应为空")
 	}
 	assertEqualBool(t, "DownloadSkipCertVerify", true, mustBool(t, "DownloadSkipCertVerify", downloadSettings["skip-cert-verify"]))
+}
+
+// TestVlessLegacyV2rayNFormat 覆盖 v2rayN 老格式（userinfo 为 base64 包裹的 "encryption:uuid@host:port"）的兼容解析。
+// 这是 sublinkPro 原本会报 "uuid格式错误" 的那一类链接。
+func TestVlessLegacyV2rayNFormat(t *testing.T) {
+	const (
+		wantUUID   = "12345678-1234-1234-1234-123456789abc"
+		wantServer = "example.com"
+		wantPort   = 443
+	)
+	// 老格式的 userinfo 段：base64("none:uuid@host:port")
+	legacyUserinfo := utils.Base64Encode("none:" + wantUUID + "@" + wantServer + ":443")
+
+	t.Run("fragment 作名称 + obfs/tls/peer 全部映射", func(t *testing.T) {
+		raw := "vless://" + legacyUserinfo +
+			"?obfs=websocket&obfsParam=cdn.example.com&path=%2Fvless&tls=1&peer=cdn.example.com#老格式节点"
+
+		v, err := DecodeVLESSURL(raw)
+		if err != nil {
+			t.Fatalf("老格式解码失败: %v", err)
+		}
+		assertEqualString(t, "Name", "老格式节点", v.Name)
+		assertEqualString(t, "Uuid", wantUUID, v.Uuid)
+		assertEqualString(t, "Server", wantServer, v.Server)
+		assertEqualIntInterface(t, "Port", wantPort, v.Port)
+		assertEqualString(t, "Query.Encryption", "none", v.Query.Encryption)
+		assertEqualString(t, "Query.Security", "tls", v.Query.Security)
+		assertEqualString(t, "Query.Type", "ws", v.Query.Type)
+		assertEqualString(t, "Query.Host", "cdn.example.com", v.Query.Host)
+		assertEqualString(t, "Query.Sni", "cdn.example.com", v.Query.Sni)
+		assertEqualString(t, "Query.Path", "/vless", v.Query.Path)
+	})
+
+	t.Run("remarks 参数作名称，无 tls 时 security=none", func(t *testing.T) {
+		raw := "vless://" + legacyUserinfo +
+			"?obfs=websocket&obfsParam=cdn.example.com&path=%2Fvless&remarks=%E8%80%81%E6%A0%BC%E5%BC%8F"
+
+		v, err := DecodeVLESSURL(raw)
+		if err != nil {
+			t.Fatalf("老格式解码失败: %v", err)
+		}
+		assertEqualString(t, "Name", "老格式", v.Name)
+		assertEqualString(t, "Query.Security", "none", v.Query.Security)
+		assertEqualString(t, "Query.Type", "ws", v.Query.Type)
+		if v.Query.Sni != "" {
+			t.Errorf("未提供 peer/sni 时 sni 应为空, 实际: %s", v.Query.Sni)
+		}
+	})
+
+	t.Run("IPv6 主机不被端口切分破坏", func(t *testing.T) {
+		userinfo := utils.Base64Encode("none:" + wantUUID + "@[2001:db8::1]:8443")
+		raw := "vless://" + userinfo + "?obfs=websocket&tls=1#ipv6节点"
+
+		v, err := DecodeVLESSURL(raw)
+		if err != nil {
+			t.Fatalf("老格式 IPv6 解码失败: %v", err)
+		}
+		assertEqualString(t, "Server", "2001:db8::1", v.Server)
+		assertEqualIntInterface(t, "Port", 8443, v.Port)
+		assertEqualString(t, "Name", "ipv6节点", v.Name)
+	})
+
+	t.Run("标准格式行为不变", func(t *testing.T) {
+		raw := "vless://" + wantUUID +
+			"@example.com:443?encryption=none&security=tls&type=ws&host=cdn.example.com&path=%2Fvless&sni=example.com#标准节点"
+
+		v, err := DecodeVLESSURL(raw)
+		if err != nil {
+			t.Fatalf("标准格式解码失败: %v", err)
+		}
+		assertEqualString(t, "Name", "标准节点", v.Name)
+		assertEqualString(t, "Uuid", wantUUID, v.Uuid)
+		assertEqualString(t, "Query.Security", "tls", v.Query.Security)
+		assertEqualString(t, "Query.Type", "ws", v.Query.Type)
+		assertEqualString(t, "Query.Host", "cdn.example.com", v.Query.Host)
+		assertEqualString(t, "Query.Sni", "example.com", v.Query.Sni)
+	})
+
+	t.Run("无法识别的输入仍然报错而不是 panic", func(t *testing.T) {
+		raw := "vless://!!!not-base64!!!?obfs=websocket&tls=1"
+		if _, err := DecodeVLESSURL(raw); err == nil {
+			t.Fatal("期望解析失败，实际却成功了")
+		}
+	})
 }
