@@ -38,8 +38,8 @@ suffix for Chinese.
 ### Overview & getting started
 | User asks about | Doc path (`<path>`) |
 |---|---|
-| What the project is, feature overview, quick start, screenshots | `README.md` |
-| (Chinese project overview) | `README.zh-CN.md` |
+| What the project is, feature overview, quick start, screenshots (Simplified Chinese, default) | `README.md` |
+| (English project overview) | `README.en.md` |
 
 ### Install, configure, deploy
 | User asks about | Doc path |

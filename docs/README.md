@@ -7,7 +7,7 @@ Welcome to SublinkPro documentation. This index helps you find the right documen
 ## 📚 For Users
 
 ### Getting Started
-- **[README.md](../README.md)** - Project overview, features, quick start
+- **[README.md](../README.md)** - Project overview, features, quick start (Simplified Chinese, the GitHub default; [English version](../README.en.md))
 - **[Installation Guide](installation.md)** - Docker, docker-compose, one-line script installation
 
 ### Configuration & Operation
@@ -91,7 +91,7 @@ Located in `.agents/skills/`:
 ### By Role
 
 **New User**:
-1. [README.md](../README.md) - What is SublinkPro?
+1. [README.md](../README.md) - What is SublinkPro? (Simplified Chinese, the GitHub default; [English](../README.en.md))
 2. [Installation Guide](installation.md) - How to install
 3. [Configuration Reference](configuration.md) - How to configure
 4. [Features](features/) - What can it do?
@@ -115,6 +115,10 @@ Located in `.agents/skills/`:
 All documentation is maintained in both English and Simplified Chinese:
 - English: `<filename>.md`
 - Chinese: `<filename>.zh-CN.md`
+
+> **README exception**: this fork serves the Chinese README as the GitHub landing page, so the
+> root pair is inverted — `README.md` is Simplified Chinese and `README.en.md` is English.
+> Everything under `docs/` still follows the convention above.
 
 Example:
 - `installation.md` (English)

@@ -5,6 +5,6 @@ webs/node_modules
 db
 logs
 README.md
-README.en-US.md
+README.en.md
 docs
 *.sh

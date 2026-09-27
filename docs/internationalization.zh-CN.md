@@ -143,3 +143,5 @@ MUI locale 配置必须由当前应用语言决定：
 i18n 相关文档必须成对维护英文和简体中文版本。如果修改 `docs/internationalization.md`，必须在同一次变更中同步修改 `docs/internationalization.zh-CN.md`，并保持语言切换链接有效。
 
 后续 README 或功能文档如果涉及国际化，也遵循同一规则：英文 canonical 文档和对应 `*.zh-CN.md` 文件必须保持一致。
+
+例外：本 fork 在仓库根目录对调了默认语言。`README.md` 为简体中文（这样 GitHub 会把它渲染成项目首页），`README.en.md` 为英文。这两份需要互相同步。`docs/` 下的所有文档仍遵循上面的标准约定。

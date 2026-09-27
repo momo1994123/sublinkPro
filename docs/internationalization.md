@@ -143,3 +143,5 @@ Do not add a locale unless all user-visible strings in the initial namespace set
 Documentation changes for i18n must be made in English and Simplified Chinese pairs. If `docs/internationalization.md` changes, update `docs/internationalization.zh-CN.md` in the same work, and keep language switch links valid.
 
 The same rule applies to future README or feature documentation updates: English canonical docs and matching `*.zh-CN.md` files must stay aligned.
+
+Exception: at the repository root the pair is inverted in this fork. `README.md` is Simplified Chinese (so GitHub renders it as the project landing page) and `README.en.md` is English. Keep those two aligned with each other. Every file under `docs/` still follows the standard convention above.
