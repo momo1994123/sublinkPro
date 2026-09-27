@@ -26,6 +26,7 @@ const CountryRulesPage = Loadable(lazy(() => import('views/country-rules')));
 const WebhookList = Loadable(lazy(() => import('views/webhooks')));
 const AirportList = Loadable(lazy(() => import('views/airports')));
 const NodeCheckList = Loadable(lazy(() => import('views/node-check')));
+const Converter = Loadable(lazy(() => import('views/converter')));
 // ==============================|| MAIN ROUTING ||==============================  //
 
 const MainRoutes = {
@@ -83,6 +84,10 @@ const MainRoutes = {
         {
           path: 'airports',
           element: <AirportList />
+        },
+        {
+          path: 'converter',
+          element: <Converter />
         }
       ]
     },

@@ -107,6 +107,7 @@
       "subscriptions": "Subscriptions",
       "templates": "Templates",
       "tags": "Tags",
+      "converter": "Format Converter",
       "scripts": "Scripts",
       "accessKeys": "API Keys",
       "tasks": "Tasks",
@@ -1348,7 +1349,8 @@
         "airportsShort": "Airports",
         "checkSettings": "Check Settings",
         "batchCheck": "Batch Check",
-        "resetColumnWidths": "Reset Column Widths"
+        "resetColumnWidths": "Reset Column Widths",
+        "legacyConvert": "Legacy Converter"
       },
       "confirm": {
         "deleteTitle": "Delete Node",
@@ -3909,5 +3911,26 @@
   },
   "pagination": {
     "rowsPerPage": "Rows per page"
+  },
+  "converter": {
+    "page": {
+      "title": "Format Converter",
+      "hint": "Batch conversion: v2rayN legacy vless (base64-wrapped), standard vless/vmess/ss/trojan/hysteria2, Shadowrocket exported links, socks/http proxy links. One link per line; copy the output into the node import box."
+    },
+    "input": {
+      "title": "Input (one link per line)",
+      "clear": "Clear",
+      "placeholder": "vless://bm9uZTpi...?remarks=RN&obfsParam=host&path=/xx&obfs=websocket&tls=1&peer=host\nvless://uuid@host:443?security=tls&type=ws#name\nss://YWVz...@host:443#name\nvmess://eyJ2IjoiMiJ9..."
+    },
+    "output": {
+      "tabUri": "Standard URI",
+      "tabClash": "Clash/Mihomo YAML",
+      "placeholder": "Converted results will appear here"
+    },
+    "stats": {
+      "ok": "{{count}} converted",
+      "error": "{{count}} failed",
+      "noError": "no failures"
+    }
   }
 }

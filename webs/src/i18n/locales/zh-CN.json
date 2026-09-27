@@ -107,6 +107,7 @@
       "subscriptions": "订阅列表",
       "templates": "模板管理",
       "tags": "标签管理",
+      "converter": "格式转换",
       "scripts": "脚本列表",
       "accessKeys": "API 密钥",
       "tasks": "任务管理",
@@ -1348,7 +1349,8 @@
         "airportsShort": "机场",
         "checkSettings": "检测设置",
         "batchCheck": "批量检测",
-        "resetColumnWidths": "重置列宽"
+        "resetColumnWidths": "重置列宽",
+        "legacyConvert": "老格式转换"
       },
       "confirm": {
         "deleteTitle": "删除节点",
@@ -3909,5 +3911,26 @@
   },
   "pagination": {
     "rowsPerPage": "每页行数"
+  },
+  "converter": {
+    "page": {
+      "title": "格式转换",
+      "hint": "支持批量转换：v2rayN 老格式 vless（base64 包裹）、标准 vless/vmess/ss/trojan/hysteria2、Shadowrocket 导出链接、socks/http 代理链接。每行一条，转换结果可直接复制后粘贴到节点导入框。"
+    },
+    "input": {
+      "title": "输入（每行一条链接）",
+      "clear": "清空",
+      "placeholder": "vless://bm9uZTpi...?remarks=RN&obfsParam=host&path=/xx&obfs=websocket&tls=1&peer=host\nvless://uuid@host:443?security=tls&type=ws#name\nss://YWVz...@host:443#name\nvmess://eyJ2IjoiMiJ9..."
+    },
+    "output": {
+      "tabUri": "标准 URI",
+      "tabClash": "Clash/Mihomo YAML",
+      "placeholder": "转换结果将显示在这里"
+    },
+    "stats": {
+      "ok": "成功 {{count}} 条",
+      "error": "失败 {{count}} 条",
+      "noError": "无失败"
+    }
   }
 }

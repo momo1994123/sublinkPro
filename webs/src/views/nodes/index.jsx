@@ -19,6 +19,7 @@ import FlightIcon from '@mui/icons-material/Flight';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SpeedIcon from '@mui/icons-material/Speed';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
@@ -1206,6 +1207,9 @@ export default function NodeList() {
             <Button variant="outlined" color="primary" startIcon={<FlightIcon />} onClick={() => navigate('/subscription/airports')}>
               {t('nodes.page.actions.airports')}
             </Button>
+            <Button variant="outlined" color="secondary" startIcon={<SwapHorizIcon />} onClick={() => navigate('/subscription/converter')}>
+              {t('nodes.page.actions.legacyConvert')}
+            </Button>
             <Button variant="outlined" color="info" startIcon={<SettingsIcon />} onClick={handleOpenSpeedTest}>
               {t('nodes.page.actions.checkSettings')}
             </Button>
@@ -1243,6 +1247,16 @@ export default function NodeList() {
             sx={{ whiteSpace: 'nowrap' }}
           >
             {t('nodes.page.actions.airportsShort')}
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            color="secondary"
+            startIcon={<SwapHorizIcon />}
+            onClick={() => navigate('/subscription/converter')}
+            sx={{ whiteSpace: 'nowrap' }}
+          >
+            {t('nodes.page.actions.legacyConvert')}
           </Button>
           <Button
             size="small"

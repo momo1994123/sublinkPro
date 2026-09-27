@@ -11,7 +11,8 @@ import {
   IconWorld,
   IconPlane,
   IconFlag,
-  IconRefreshDot
+  IconRefreshDot,
+  IconArrowsExchange
 } from '@tabler/icons-react';
 
 // ==============================|| SUBSCRIPTION MENU ITEMS ||============================== //
@@ -74,6 +75,15 @@ const subscription = {
       type: 'item',
       url: '/subscription/tags',
       icon: IconTags,
+      breadcrumbs: true
+    },
+    {
+      id: 'converter',
+      title: 'Format Converter',
+      titleKey: 'navigation.items.converter',
+      type: 'item',
+      url: '/subscription/converter',
+      icon: IconArrowsExchange,
       breadcrumbs: true
     }
   ]
