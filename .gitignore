@@ -9,6 +9,7 @@ sublink.exe
 .idea/
 static
 sublinkPro.exe
+sublinkPro-linux
 /sublink
 
 # AI agent runtime and temporary files (DO NOT COMMIT)
